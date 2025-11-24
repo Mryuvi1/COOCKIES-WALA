@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 from threading import Thread, Event
 import time
 import requests
+import os
 
 app = Flask(__name__)
 
@@ -9,12 +10,11 @@ active_tasks = {}
 stop_flags = {}
 
 # --------------------------------------------------------
-# FB LOGIN FUNCTION (username + password + 2FA)
+# FACEBOOK LOGIN
 # --------------------------------------------------------
 def fb_login(username, password, otp):
     session = requests.Session()
 
-    # Step 1: Login request (Facebook Android API style)
     login_url = "https://b-graph.facebook.com/auth/login"
 
     payload = {
@@ -37,19 +37,22 @@ def fb_login(username, password, otp):
 
 
 # --------------------------------------------------------
-# SENDING MESSAGES
+# SEND MESSAGES FUNCTION
 # --------------------------------------------------------
-def send_messages_fb(session, target_ids, message, delay, task_id):
+def send_messages_fb(session, threadId, messages, delay, prefix, task_id):
 
-    for uid in target_ids:
+    for msg in messages:
+
         if stop_flags[task_id].is_set():
-            print("STOP PRESSED — exiting thread")
+            print("STOP PRESSED — EXITING THREAD")
             break
 
-        send_url = f"https://graph.facebook.com/{uid}/messages"
+        final_msg = f"{prefix} {msg}"
+
+        send_url = f"https://graph.facebook.com/v17.0/t_{threadId}/"
 
         data = {
-            "message": message
+            "message": final_msg,
         }
 
         headers = {
@@ -58,58 +61,76 @@ def send_messages_fb(session, target_ids, message, delay, task_id):
 
         try:
             r = session.post(send_url, data=data, headers=headers)
-            print("Sent:", uid, r.text)
+            print("Sent:", final_msg, r.text)
         except:
-            print("Error sending to:", uid)
+            print("Error sending message:", final_msg)
 
         time.sleep(delay)
 
 
 # --------------------------------------------------------
-# ROUTES
+# HOME PAGE
 # --------------------------------------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
+# --------------------------------------------------------
+# START SENDING
+# --------------------------------------------------------
 @app.route("/start", methods=["POST"])
 def start():
+
     username = request.form.get("username")
     password = request.form.get("password")
     otp = request.form.get("otp")
-    message = request.form.get("message")
-    delay = float(request.form.get("delay"))
-    numbers = request.form.get("numbers")
+    threadId = request.form.get("threadId")
+    prefix = request.form.get("kidx")
+    delay = float(request.form.get("time"))
 
-    target_ids = numbers.split("\n")
+    txt_file = request.files["txtFile"]
 
-    # FB LOGIN
+    # SAVE FILE TEMP
+    filepath = "messages.txt"
+    txt_file.save(filepath)
+
+    # READ FILE LINES
+    with open(filepath, "r", encoding="utf-8") as f:
+        messages = [line.strip() for line in f.readlines() if line.strip()]
+
+    # LOGIN FB
     session = fb_login(username, password, otp)
     if session is None:
-        return jsonify({"status": "fail", "msg": "Login Failed"})
+        return "LOGIN FAILED"
 
     task_id = str(time.time())
     stop_flags[task_id] = Event()
 
-    t = Thread(target=send_messages_fb, args=(session, target_ids, message, delay, task_id))
+    t = Thread(target=send_messages_fb, args=(session, threadId, messages, delay, prefix, task_id))
     t.start()
 
     active_tasks[task_id] = t
 
-    return jsonify({"status": "ok", "task_id": task_id})
+    return f"Task Started Successfully.<br>Task ID: <b>{task_id}</b>"
 
 
+# --------------------------------------------------------
+# STOP TASK
+# --------------------------------------------------------
 @app.route("/stop", methods=["POST"])
 def stop():
-    task_id = request.form.get("task_id")
+    task_id = request.form.get("taskId")
 
     if task_id in stop_flags:
         stop_flags[task_id].set()
-        return jsonify({"status": "ok"})
+        return "Stopped Successfully"
 
-    return jsonify({"status": "fail"})
+    return "Invalid Task ID"
 
 
+# --------------------------------------------------------
+# RUN APP
+# --------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
