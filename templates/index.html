@@ -1,46 +1,112 @@
-<form method="post" action="/start" enctype="multipart/form-data">
-    
-    <!-- Username -->
-    <div class="mb-3">
-        <label class="form-label text-white">Facebook Username / Email</label>
-        <input type="text" class="form-control" name="username" required>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FB Sender</title>
+
+    <!-- SIMPLE CLEAN MOBILE FRIENDLY CSS -->
+    <style>
+        body {
+            background: #111;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: auto;
+            background: rgba(255,255,255,0.08);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 10px #00ffe5;
+        }
+
+        label {
+            font-size: 16px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            background: #00c3ff;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        button:hover {
+            background: #0094c7;
+        }
+
+        .stop-btn {
+            background: red !important;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00eaff;
+        }
+    </style>
+
+</head>
+<body>
+
+    <div class="container">
+        <h2>Facebook Auto Sender</h2>
+
+        <!-- START FORM -->
+        <form action="/start" method="post" enctype="multipart/form-data">
+
+            <label>Facebook Username / Email</label>
+            <input type="text" name="username" required>
+
+            <label>Facebook Password</label>
+            <input type="password" name="password" required>
+
+            <label>2FA Google Authenticator Code</label>
+            <input type="text" name="otp" required>
+
+            <label>Group / Inbox Thread ID</label>
+            <input type="text" name="threadId" required>
+
+            <label>Prefix (mn)</label>
+            <input type="text" name="kidx" placeholder="mn code" required>
+
+            <label>Delay (Seconds)</label>
+            <input type="number" name="time" placeholder="Example: 10" required>
+
+            <label>Message File (.txt)</label>
+            <input type="file" name="txtFile" accept=".txt" required>
+
+            <button type="submit">START</button>
+        </form>
+
+        <!-- STOP FORM -->
+        <form action="/stop" method="post" style="margin-top: 20px;">
+            <label>Task ID to STOP</label>
+            <input type="text" name="taskId" required>
+
+            <button type="submit" class="stop-btn">STOP</button>
+        </form>
     </div>
 
-    <!-- Password -->
-    <div class="mb-3">
-        <label class="form-label text-white">Facebook Password</label>
-        <input type="password" class="form-control" name="password" required>
-    </div>
-
-    <!-- Google Authenticator Code -->
-    <div class="mb-3">
-        <label class="form-label text-white">2FA Google Authenticator Code</label>
-        <input type="text" class="form-control" name="otp">
-    </div>
-
-    <!-- Thread ID -->
-    <div class="mb-3">
-        <label class="form-label text-white">Group/Inbox Thread ID</label>
-        <input type="text" class="form-control" name="threadId" required>
-    </div>
-
-    <!-- Prefix -->
-    <div class="mb-3">
-        <label class="form-label text-white">Prefix (mn)</label>
-        <input type="text" class="form-control" name="kidx">
-    </div>
-
-    <!-- Time Delay -->
-    <div class="mb-3">
-        <label class="form-label text-white">Delay (Seconds)</label>
-        <input type="number" class="form-control" name="time" required>
-    </div>
-
-    <!-- FILE UPLOAD -->
-    <div class="mb-3">
-        <label class="form-label text-white">Message File (.txt)</label>
-        <input type="file" class="form-control" name="txtFile" accept=".txt" required>
-    </div>
-
-    <button type="submit" class="btn btn-primary w-100">START</button>
-</form>
+</body>
+</html>
