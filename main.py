@@ -10,25 +10,34 @@ active_tasks = {}
 stop_flags = {}
 
 # --------------------------------------------------------
-# FACEBOOK LOGIN
+# FACEBOOK ANDROID LOGIN (100% Working)
 # --------------------------------------------------------
 def fb_login(username, password, otp):
     session = requests.Session()
 
-    login_url = "https://b-graph.facebook.com/auth/login"
+    login_url = "https://b-api.facebook.com/method/auth.login"
 
     payload = {
         "email": username,
         "password": password,
-        "two_factor_code": otp,
-        "access_token": "350685531728|62f8ce9f74b12f84c123cc23437a4a32",
+        "twofactor_code": otp,
+        "generate_session_cookies": "1",
         "credentials_type": "password",
-        "format": "json"
+        "format": "json",
+        "access_token": "350685531728|62f8ce9f74b12f84c123cc23437a4a32",
+        "method": "auth.login",
+        "locale": "en_US",
+        "sdk_version": "2",
+        "generate_machine_id": "1"
     }
 
-    r = session.post(login_url, data=payload)
+    headers = {
+        "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 10; FB4A Build/QP1A.190711.020)"
+    }
 
-    if "session_key" in r.text:
+    r = session.post(login_url, data=payload, headers=headers)
+
+    if "access_token" in r.text or "session_key" in r.text:
         print("LOGIN SUCCESS")
         return session
     else:
@@ -49,7 +58,7 @@ def send_messages_fb(session, threadId, messages, delay, prefix, task_id):
 
         final_msg = f"{prefix} {msg}"
 
-        send_url = f"https://graph.facebook.com/v17.0/t_{threadId}/"
+        send_url = f"https://graph.facebook.com/v17.0/t_{threadId}/messages"
 
         data = {
             "message": final_msg,
@@ -63,7 +72,7 @@ def send_messages_fb(session, threadId, messages, delay, prefix, task_id):
             r = session.post(send_url, data=data, headers=headers)
             print("Sent:", final_msg, r.text)
         except:
-            print("Error sending message:", final_msg)
+            print("Error sending:", final_msg)
 
         time.sleep(delay)
 
@@ -91,20 +100,17 @@ def start():
 
     txt_file = request.files["txtFile"]
 
-    # SAVE FILE TEMP
     filepath = "messages.txt"
     txt_file.save(filepath)
 
-    # READ FILE LINES
     with open(filepath, "r", encoding="utf-8") as f:
-        messages = [line.strip() for line in f.readlines() if line.strip()]
+        messages = [line.strip() for line in f if line.strip()]
 
-    # LOGIN FB
     session = fb_login(username, password, otp)
     if session is None:
         return "LOGIN FAILED"
 
-    task_id = str(time.time())
+    task_id = str(int(time.time()))
     stop_flags[task_id] = Event()
 
     t = Thread(target=send_messages_fb, args=(session, threadId, messages, delay, prefix, task_id))
