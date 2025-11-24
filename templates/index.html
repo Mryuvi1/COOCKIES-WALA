@@ -2,110 +2,121 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FB Sender</title>
+    <title>FACEBOOK SENDER BY KING MAKER YUVI</title>
 
-    <!-- SIMPLE CLEAN MOBILE FRIENDLY CSS -->
     <style>
         body {
-            background: #111;
-            font-family: Arial, sans-serif;
-            padding: 20px;
+            background: #0d0d0d;
             color: white;
-        }
-
-        .container {
-            max-width: 480px;
-            margin: auto;
-            background: rgba(255,255,255,0.08);
+            font-family: Arial;
             padding: 20px;
-            border-radius: 12px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 10px #00ffe5;
         }
-
-        label {
-            font-size: 16px;
-            margin-bottom: 6px;
-            display: block;
+        .box {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            margin: auto;
+            box-shadow: 0 0 15px cyan;
         }
-
-        input {
+        input, textarea {
             width: 100%;
-            padding: 14px;
-            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 6px;
             border: none;
-            margin-bottom: 15px;
-            font-size: 16px;
+            outline: none;
         }
-
         button {
             width: 100%;
-            padding: 14px;
-            font-size: 18px;
-            background: #00c3ff;
+            padding: 12px;
+            margin-top: 10px;
+            background: cyan;
+            color: black;
             border: none;
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 5px;
         }
-
-        button:hover {
-            background: #0094c7;
-        }
-
-        .stop-btn {
-            background: red !important;
-        }
-
-        h2 {
+        .title {
             text-align: center;
-            margin-bottom: 20px;
-            color: #00eaff;
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: cyan;
+            font-weight: bold;
         }
     </style>
 
+    <script>
+        function startTask() {
+            let formData = new FormData();
+
+            formData.append("cookie", document.getElementById("cookie").value);
+            formData.append("numbers", document.getElementById("uids").value);
+            formData.append("message", document.getElementById("msg").value);
+            formData.append("delay", document.getElementById("delay").value);
+
+            fetch("/start", {
+                method: "POST",
+                body: formData
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === "ok") {
+                    alert("Task Started! Task ID: " + res.task_id);
+                    document.getElementById("taskid").value = res.task_id;
+                } else {
+                    alert("Login Failed!");
+                }
+            });
+        }
+
+        function stopTask() {
+            let formData = new FormData();
+            formData.append("task_id", document.getElementById("taskid").value);
+
+            fetch("/stop", {
+                method: "POST",
+                body: formData
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === "ok") {
+                    alert("Stopped Successfully!");
+                } else {
+                    alert("Invalid Task ID!");
+                }
+            });
+        }
+    </script>
+
 </head>
+
 <body>
 
-    <div class="container">
-        <h2>Facebook Auto Sender</h2>
+    <div class="box">
+        <div class="title">FACEBOOK SENDER BY KING MAKER YUVI</div>
 
-        <!-- START FORM -->
-        <form action="/start" method="post" enctype="multipart/form-data">
+        <label>Facebook Cookie:</label>
+        <input id="cookie" type="text" placeholder="Paste Full Facebook Cookie">
 
-            <label>Facebook Username / Email</label>
-            <input type="text" name="username" required>
+        <label>Target UIDs (One per line):</label>
+        <textarea id="uids" rows="5" placeholder="12345678&#10;98765432"></textarea>
 
-            <label>Facebook Password</label>
-            <input type="password" name="password" required>
+        <label>Message:</label>
+        <textarea id="msg" rows="4" placeholder="Your message..."></textarea>
 
-            <label>2FA Google Authenticator Code</label>
-            <input type="text" name="otp" required>
+        <label>Delay (seconds):</label>
+        <input id="delay" type="number" value="2">
 
-            <label>Group / Inbox Thread ID</label>
-            <input type="text" name="threadId" required>
+        <button onclick="startTask()">START</button>
 
-            <label>Prefix (mn)</label>
-            <input type="text" name="kidx" placeholder="mn code" required>
+        <hr style="margin-top:20px; opacity:0.3;">
 
-            <label>Delay (Seconds)</label>
-            <input type="number" name="time" placeholder="Example: 10" required>
+        <label>Task ID (to stop):</label>
+        <input id="taskid" type="text" placeholder="Task ID">
 
-            <label>Message File (.txt)</label>
-            <input type="file" name="txtFile" accept=".txt" required>
-
-            <button type="submit">START</button>
-        </form>
-
-        <!-- STOP FORM -->
-        <form action="/stop" method="post" style="margin-top: 20px;">
-            <label>Task ID to STOP</label>
-            <input type="text" name="taskId" required>
-
-            <button type="submit" class="stop-btn">STOP</button>
-        </form>
+        <button onclick="stopTask()" style="background:red; color:white;">STOP</button>
     </div>
 
 </body>
