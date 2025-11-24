@@ -36,28 +36,37 @@ def fb_session_from_cookie(cookie_string):
 # ----------------------------------------
 # MESSAGE SENDER THREAD
 # ----------------------------------------
-def send_messages(session, target_ids, message, delay, task_id):
+def send_messages_fb(session, threadId, messages, delay, prefix, task_id):
 
-    for uid in target_ids:
+    send_url = f"https://mbasic.facebook.com/messages/send/?icm=1&refid=12"
+
+    for msg in messages:
 
         if stop_flags[task_id].is_set():
             print("STOP PRESSED — EXITING THREAD")
             break
 
-        send_url = f"https://graph.facebook.com/v17.0/t_{uid}/"
+        final_msg = f"{prefix} {msg}"
 
-        payload = {
-            "message": message
+        data = {
+            "fb_dtsg": session.cookies.get("fb_dtsg", "NA"),
+            "jazoest": "2873",
+            "tids": f"cid.c.{threadId}",
+            "body": final_msg,
+            "send": "Send"
+        }
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10)",
         }
 
         try:
-            r = session.post(send_url, data=payload)
-            print("Sent to:", uid, r.text)
+            r = session.post(send_url, data=data, headers=headers)
+            print("MESSAGE SENT:", final_msg)
         except Exception as e:
-            print("Error sending:", uid, str(e))
+            print("ERROR:", e)
 
         time.sleep(delay)
-
 
 # ----------------------------------------
 # ROUTES
