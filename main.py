@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from threading import Thread, Event
-import time
 import requests
+import time
 
 app = Flask(__name__)
 
@@ -9,130 +9,98 @@ active_tasks = {}
 stop_flags = {}
 
 # ----------------------------------------
-# FACEBOOK LOGIN
+# FACEBOOK COOKIE LOGIN (NO PASSWORD)
 # ----------------------------------------
-def fb_login(username, password, otp):
+def fb_session_from_cookie(cookie_string):
     session = requests.Session()
 
-    url = "https://b-graph.facebook.com/auth/login"
+    cookie_pairs = cookie_string.split(";")
+    for pair in cookie_pairs:
+        try:
+            k, v = pair.strip().split("=")
+            session.cookies.set(k, v)
+        except:
+            pass
 
-    payload = {
-        "email": username,
-        "password": password,
-        "two_factor_code": otp,
-        "access_token": "350685531728|62f8ce9f74b12f84c123cc23437a4a32",
-        "credentials_type": "password",
-        "format": "json"
-    }
+    # Check login success
+    test = session.get("https://www.facebook.com/me")
 
-    r = session.post(url, data=payload).json()
-
-    if "session_key" in str(r):
-        print("LOGIN SUCCESS")
+    if "id" in test.text or "profile" in test.text:
+        print("COOKIE LOGIN SUCCESS")
         return session
-    else:
-        print("LOGIN FAILED:", r)
-        return None
+    
+    print("COOKIE LOGIN FAILED")
+    return None
 
 
 # ----------------------------------------
-# SEND MESSAGE FUNCTION (WORKING)
+# MESSAGE SENDER THREAD
 # ----------------------------------------
-def send_messages_fb(session, threadId, messages, delay, prefix, task_id):
+def send_messages(session, target_ids, message, delay, task_id):
 
-    send_url = "https://b-graph.facebook.com/messaging/send/"
-
-    for msg in messages:
+    for uid in target_ids:
 
         if stop_flags[task_id].is_set():
             print("STOP PRESSED — EXITING THREAD")
             break
 
-        final_msg = f"{prefix} {msg}"
+        send_url = f"https://graph.facebook.com/v17.0/t_{uid}/"
 
         payload = {
-            "recipient": {
-                "thread_key": {
-                    "thread_fbid": threadId
-                }
-            },
-            "message": {
-                "text": final_msg
-            }
-        }
-
-        headers = {
-            "User-Agent": "FB4A",
-            "Content-Type": "application/json",
-            "fb_api_req_friendly_name": "MessengerComposerSendMessageMutation"
+            "message": message
         }
 
         try:
-            r = session.post(send_url, json=payload, headers=headers)
-            print("Sent:", final_msg, r.text)
+            r = session.post(send_url, data=payload)
+            print("Sent to:", uid, r.text)
         except Exception as e:
-            print("Error sending:", final_msg, e)
+            print("Error sending:", uid, str(e))
 
         time.sleep(delay)
 
 
 # ----------------------------------------
-# HOME PAGE
+# ROUTES
 # ----------------------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-# ----------------------------------------
-# START
-# ----------------------------------------
 @app.route("/start", methods=["POST"])
 def start():
+    cookie = request.form.get("cookie")
+    message = request.form.get("message")
+    delay = float(request.form.get("delay"))
+    numbers = request.form.get("numbers")
 
-    username = request.form.get("username")
-    password = request.form.get("password")
-    otp = request.form.get("otp")
-    threadId = request.form.get("threadId")
-    prefix = request.form.get("kidx")
-    delay = float(request.form.get("time"))
+    target_ids = [x.strip() for x in numbers.split("\n") if x.strip()]
 
-    txt_file = request.files["txtFile"]
-    txt_file.save("messages.txt")
+    session = fb_session_from_cookie(cookie)
 
-    messages = [i.strip() for i in open("messages.txt", "r", encoding="utf-8").readlines() if i.strip()]
-
-    session = fb_login(username, password, otp)
     if session is None:
-        return "LOGIN FAILED"
+        return jsonify({"status": "fail", "msg": "Cookie Login Failed"})
 
     task_id = str(time.time())
     stop_flags[task_id] = Event()
 
-    t = Thread(target=send_messages_fb, args=(session, threadId, messages, delay, prefix, task_id))
+    t = Thread(target=send_messages, args=(session, target_ids, message, delay, task_id))
     t.start()
 
     active_tasks[task_id] = t
 
-    return f"Task Started Successfully.<br>Task ID: <b>{task_id}</b>"
+    return jsonify({"status": "ok", "task_id": task_id})
 
 
-# ----------------------------------------
-# STOP
-# ----------------------------------------
 @app.route("/stop", methods=["POST"])
 def stop():
-    task_id = request.form.get("taskId")
-
+    task_id = request.form.get("task_id")
     if task_id in stop_flags:
         stop_flags[task_id].set()
-        return "Stopped Successfully"
+        return jsonify({"status": "ok"})
+    
+    return jsonify({"status": "fail"})
 
-    return "Invalid Task ID"
 
-
-# ----------------------------------------
-# RUN APP
-# ----------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
