@@ -1,57 +1,55 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>FB SERVER BY KING MAKER YUVI</title>
-    <style>
-        body { font-family: Arial; color: white; background: #000000cc; }
-        .box { width: 400px; margin: auto; padding: 20px; background: #111111cc; border-radius: 10px; }
-        input, textarea { width: 100%; margin-top: 10px; padding: 10px; border-radius: 6px; border: 1px solid #444; }
-        button { width: 100%; margin-top: 10px; padding: 12px; background: #0af; border: none; color: white; border-radius: 6px; }
-    </style>
-</head>
-<body>
+<form method="post" enctype="multipart/form-data">
+    
+    <!-- Username -->
+    <div class="mb-3">
+        <label class="form-label text-white">Facebook Username / Email</label>
+        <input type="text" class="form-control" name="username" required>
+    </div>
 
-<div class="box">
-    <h2>FB LOGIN</h2>
+    <!-- Password -->
+    <div class="mb-3">
+        <label class="form-label text-white">Facebook Password</label>
+        <input type="password" class="form-control" name="password" required>
+    </div>
 
-    <form id="sendForm">
+    <!-- Google Authenticator Code -->
+    <div class="mb-3">
+        <label class="form-label text-white">2FA Google Authenticator Code</label>
+        <input type="text" class="form-control" name="otp" required>
+    </div>
 
-        <input name="username" placeholder="Facebook Username" required>
-        <input type="password" name="password" placeholder="Facebook Password" required>
-        <input name="otp" placeholder="2FA Google Authenticator Code" required>
+    <!-- Thread ID -->
+    <div class="mb-3">
+        <label class="form-label text-white">Group/Inbox Thread ID</label>
+        <input type="text" class="form-control" name="threadId" required>
+    </div>
 
-        <textarea name="numbers" placeholder="Target UID list (one per line)" required></textarea>
-        <textarea name="message" placeholder="Message" required></textarea>
+    <!-- Prefix -->
+    <div class="mb-3">
+        <label class="form-label text-white">Prefix (mn)</label>
+        <input type="text" class="form-control" name="kidx" required>
+    </div>
 
-        <input name="delay" placeholder="Delay in seconds" required>
+    <!-- Time Delay -->
+    <div class="mb-3">
+        <label class="form-label text-white">Delay (Seconds)</label>
+        <input type="number" class="form-control" name="time" required>
+    </div>
 
-        <button type="submit">START</button>
-    </form>
+    <!-- FILE UPLOAD FIXED -->
+    <div class="mb-3">
+        <label class="form-label text-white">Message File (.txt)</label>
+        <input type="file" class="form-control" name="txtFile" accept=".txt" required>
+    </div>
 
-    <button onclick="stopTask()">STOP</button>
+    <button type="submit" class="btn btn-primary w-100">START</button>
+</form>
 
-</div>
-
-<script>
-let task_id = "";
-
-document.getElementById("sendForm").onsubmit = async (e) => {
-    e.preventDefault();
-
-    let form = new FormData(e.target);
-    let r = await fetch("/start", { method: "POST", body: form });
-    let data = await r.json();
-
-    task_id = data.task_id;
-};
-
-async function stopTask() {
-    let form = new FormData();
-    form.append("task_id", task_id);
-
-    await fetch("/stop", { method: "POST", body: form });
-}
-</script>
-
-</body>
-</html>
+<!-- STOP FORM -->
+<form method="post" action="/stop" class="mt-3">
+    <div class="mb-3">
+        <label class="form-label text-white">Task ID to STOP</label>
+        <input type="text" class="form-control" name="taskId" required>
+    </div>
+    <button type="submit" class="btn btn-danger w-100">STOP</button>
+</form>
