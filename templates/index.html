@@ -51,9 +51,9 @@
         function startTask() {
             let formData = new FormData();
 
-            formData.append("cookie", document.getElementById("cookie").value);
-            formData.append("numbers", document.getElementById("uids").value);
-            formData.append("message", document.getElementById("msg").value);
+            formData.append("cookies", document.getElementById("cookie").value);
+            formData.append("uids", document.getElementById("uids").value);
+            formData.append("msg", document.getElementById("msg").value);
             formData.append("delay", document.getElementById("delay").value);
 
             fetch("/start", {
