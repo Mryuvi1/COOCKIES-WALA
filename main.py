@@ -8,9 +8,9 @@ app = Flask(__name__)
 active_tasks = {}
 stop_flags = {}
 
-# --------------------------------------------------------
+# ----------------------------------------
 # FACEBOOK LOGIN
-# --------------------------------------------------------
+# ----------------------------------------
 def fb_login(username, password, otp):
     session = requests.Session()
 
@@ -35,9 +35,9 @@ def fb_login(username, password, otp):
         return None
 
 
-# --------------------------------------------------------
+# ----------------------------------------
 # SEND MESSAGE FUNCTION (WORKING)
-# --------------------------------------------------------
+# ----------------------------------------
 def send_messages_fb(session, threadId, messages, delay, prefix, task_id):
 
     send_url = "https://b-graph.facebook.com/messaging/send/"
@@ -52,7 +52,9 @@ def send_messages_fb(session, threadId, messages, delay, prefix, task_id):
 
         payload = {
             "recipient": {
-                "thread_key": {"thread_fbid": threadId}
+                "thread_key": {
+                    "thread_fbid": threadId
+                }
             },
             "message": {
                 "text": final_msg
@@ -68,23 +70,23 @@ def send_messages_fb(session, threadId, messages, delay, prefix, task_id):
         try:
             r = session.post(send_url, json=payload, headers=headers)
             print("Sent:", final_msg, r.text)
-        except:
-            print("Error sending:", final_msg)
+        except Exception as e:
+            print("Error sending:", final_msg, e)
 
         time.sleep(delay)
 
 
-# --------------------------------------------------------
+# ----------------------------------------
 # HOME PAGE
-# --------------------------------------------------------
+# ----------------------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-# --------------------------------------------------------
-# START SENDER
-# --------------------------------------------------------
+# ----------------------------------------
+# START
+# ----------------------------------------
 @app.route("/start", methods=["POST"])
 def start():
 
@@ -115,9 +117,9 @@ def start():
     return f"Task Started Successfully.<br>Task ID: <b>{task_id}</b>"
 
 
-# --------------------------------------------------------
+# ----------------------------------------
 # STOP
-# --------------------------------------------------------
+# ----------------------------------------
 @app.route("/stop", methods=["POST"])
 def stop():
     task_id = request.form.get("taskId")
@@ -129,7 +131,8 @@ def stop():
     return "Invalid Task ID"
 
 
-# --------------------------------------------------------
-# RUN
-# --------------------------------------------------------
+# ----------------------------------------
+# RUN APP
+# ----------------------------------------
 if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
